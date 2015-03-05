@@ -64,14 +64,14 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-    "usage: logcut [-iawh] [-F format] -f date_spec [-t date_spec] file...\n"
-    "\t-F: Specify timestamp field format in stratime(3).\n"
-    "\t-a: Use \"%%b %%d %%T\" as timestamp filed format.\n"
-    "\t-i: Use \"%%Y-%%m-%%d %%T\" as timestamp filed format.\n"
-    "\t-w: Use \"[%%d/%%b/%%Y:%%T\"(apache log format) as timestamp filed "
-	"format.\n"
-    "\t$Revision: 1.10 $\n");
+	    "usage: logcut [-iawh] [-F format] -f date_spec [-t date_spec] "
+		"file...\n"
+	    "\t-F: Specify timestamp field format in strptime(3)\n"
+	    "\t-a: Use ANSI/syslog timestamp format (%%b %%d %%T)\n"
+	    "\t-i: Use ISO timestamp format (%%Y-%%m-%%d %%T)\n"
+	    "\t-w: Use apache timestamp format ([%%d/%%b/%%Y:%%T)\n");
 }
+
 /** program entry point */
 int
 main(int argc, char *argv[])
@@ -161,7 +161,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 	if (fmt == NULL)
-		fmt = ISO_FMT;
+		fmt = ANSI_FMT;
 	argv += optind;
 
 	if (argc <= 0) {

@@ -4,7 +4,7 @@ Select lines of a log file with given time range using binary search.
 example:
 
     logcut -f '2 hours ago' -a /var/log/messages
-    logcut -f '5:55' -t '8:30' /usr/local/tomcat5/logs/localhost_log.txt
+    logcut -f '5:55' -t '8:30' -i /usr/local/tomcat5/logs/localhost_log.txt
     logcut -f '2/1' -t '2/8' -w /var/log/httpd/access_log
 
 Log records of syslog has no 'year' information.  'logcut' fills up the
