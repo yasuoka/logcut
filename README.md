@@ -1,5 +1,5 @@
 
-Select lines of a log file with given timestamp using binary search.
+Select lines of a log file with given time range using binary search.
 
 example:
 
