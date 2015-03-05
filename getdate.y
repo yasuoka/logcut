@@ -97,7 +97,6 @@ static	time_t RelativeDate (time_t, time_t, time_t);
 static	time_t RelativeMonth (time_t, time_t);
 static	int LookupWord (char *);
 static	int yylex (void);
-static	int yyparse (void);
 
 %}
 
