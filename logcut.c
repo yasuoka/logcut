@@ -33,43 +33,38 @@
 #define	LOGCUT_DEBUG	1
  */
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <time.h>
+
 #if defined(__GLIBC__) && (__GLIBC__ >= 2 )
 #define _XOPEN_SOURCE
 #define __USE_XOPEN
 #endif
-#include <sys/stat.h>
-#include <stdio.h>
+
+#include <err.h>
 #include <fcntl.h>
-#include <time.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <sys/timeb.h>
-#include <sys/time.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "defs.h"
 
-static time_t curr_time;
-static struct tm curr_tm;
+static void	 adjust_tm(struct tm *);
+static int	 read_time(int, const char *, time_t *);
+static off_t	 line_next(int, off_t);
+static off_t	 line_head(int, off_t);
+static off_t	 search_by_time(int, const char *, time_t, off_t, off_t);
+static int	 cut_file(int, int, const char *, time_t, time_t);
+static void	 usage(void);
 
-static void adjust_tm (struct tm *);
-static int read_time (int, const char *, time_t *);
-static off_t line_next (int, off_t);
-static off_t line_head (int, off_t);
-static off_t search_by_time (int, const char *, time_t, off_t, off_t);
-static int cut_file (int, int, const char *, time_t, time_t);
-static void usage (void);
-
-static const char *ISO_FMT		= "%Y-%m-%d %T";
-static const char *ANSI_FMT		= "%b %d %T";
-static const char *APACHE_FMT		= "%d/%b/%Y:%T";
-
-#ifdef	LOGCUT_DEBUG	
-#define	LOGCUT_DBG(x)	fprintf x
-#else
-#define	LOGCUT_DBG(x)	
-#endif
+static time_t		 curr_time;
+static struct		 tm curr_tm;
+static const char	*ISO_FMT = "%Y-%m-%d %T";
+static const char	*ANSI_FMT = "%b %d %T";
+static const char	*APACHE_FMT = "%d/%b/%Y:%T";
 
 static void
 usage(void)
@@ -87,12 +82,12 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	int ch, fd;
-	const char *fmt = NULL;
-	time_t f, t;
-	struct timeb tb;
-	extern int optind;
-	extern char *optarg;
+	int		 ch, fd;
+	const char	*fmt = NULL;
+	time_t		 f, t;
+	struct timeb	 tb;
+	extern int	 optind;
+	extern char	*optarg;
 
 	tzset();
 
@@ -122,7 +117,7 @@ main(int argc, char *argv[])
 	f = -1;
 	t = curr_time;
 
-	while ((ch = getopt(argc, argv, "iawhF:f:t:")) != -1) {
+	while ((ch = getopt(argc, argv, "iawhF:f:t:")) != -1)
 		switch (ch) {
 		case 'i':
 			if (fmt != NULL)
@@ -165,7 +160,7 @@ main(int argc, char *argv[])
 			usage();
 			exit(1);
 		}
-	}
+
 	argc -= optind;
 	if (f == -1) {
 		usage();
@@ -180,14 +175,11 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 	while (argc > 0) {
-		if ((fd = open(argv[0], O_RDONLY)) < 0) {
-			perror(argv[0]);
-			exit(1);
-		}
-		if (cut_file(fd, STDOUT_FILENO, fmt, f, t) != 0) {
-			perror(argv[0]);
-			exit(1);
-		}
+		if ((fd = open(argv[0], O_RDONLY)) < 0)
+			err(1, "open(%s)", argv[0]);
+		if (cut_file(fd, STDOUT_FILENO, fmt, f, t) != 0)
+			err(1, "cut_file(%s)", argv[0]);
+		
 		close(fd);
 		argv++;
 		argc--;
@@ -210,19 +202,17 @@ adjust_tm(struct tm * tm)
 static int
 read_time(int fd, const char *fmt, time_t * t)
 {
-	int sz, web_log;
-	struct tm tm;
-	char *bufp, buf[40];
+	int		 sz, web_log;
+	struct tm	 tm;
+	char		*bufp, buf[40];
 
 	web_log = (fmt == APACHE_FMT)? 1 : 0;
 	memset(&tm, 0, sizeof(tm));
 	tm.tm_mon = -1;
-	if ((sz = read(fd, buf, sizeof(buf) - 1)) < 0) {
-		perror("read");
-		exit(1);
-	}
+	if ((sz = read(fd, buf, sizeof(buf) - 1)) < 0)
+		err(1, "read");
 	if (sz == 0)
-		return -1;
+		return (-1);
 	buf[sz] = '\0';
 	if (web_log && (bufp = strchr(buf, '[')) != NULL)
 		bufp++;
@@ -234,15 +224,15 @@ read_time(int fd, const char *fmt, time_t * t)
 
 	*t = mktime(&tm);
 
-	return 1;
+	return (1);
 }
 
 static off_t
 line_next(int fd, off_t off)
 {
-	int sz;
-	char *nl, buf[BUFSIZ];
-	int sz0;
+	int	 sz;
+	char	*nl, buf[BUFSIZ];
+	int	 sz0;
 
 	sz0 = sizeof(buf) - 1;
 	lseek(fd, off, SEEK_SET);
@@ -255,16 +245,16 @@ line_next(int fd, off_t off)
 		off += sz;
 	}
 	lseek(fd, off, SEEK_SET);
-	return off;
+	return (off);
 }
 
 static off_t
 line_head(int fd, off_t off)
 {
-	off_t r;
-	size_t sz;
-	char *nl, buf[BUFSIZ];
-	int sz0;
+	off_t	 r;
+	ssize_t	 sz;
+	char	*nl, buf[BUFSIZ];
+	int	 sz0;
 
 	sz0 = sizeof(buf) - 1;
 
@@ -273,10 +263,9 @@ line_head(int fd, off_t off)
 		off = r;
 		if (sz0 <= 0)
 			break;
-		if ((sz = read(fd, buf, sz0)) < 0) {
-			perror("read");
-			exit(1);
-		}
+		if ((sz = read(fd, buf, sz0)) < 0)
+			err(1, "read");
+		
 		buf[sz] = '\0';
 		if ((nl = strrchr(buf, '\n')) != NULL) {
 			off += (nl - buf) + 1;
@@ -287,13 +276,13 @@ line_head(int fd, off_t off)
 		off = 0;
 	lseek(fd, off, SEEK_SET);
 
-	return off;
+	return (off);
 }
 
 #ifdef LOGCUT_DEBUG
 static char *my_ctime(time_t *t, char *buf, int lbuf)
 {
-	struct tm tm;
+	struct tm	 tm;
 
 	memset(&tm, 0, sizeof(tm));
 
@@ -303,18 +292,18 @@ static char *my_ctime(time_t *t, char *buf, int lbuf)
 	    tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
 	    tm.tm_hour, tm.tm_min, tm.tm_sec);
 
-	return buf;
+	return (buf);
 }
 #endif
 
 static off_t
 search_by_time(int fd, const char *fmt, time_t t, off_t off_m, off_t off_n)
 {
-	int rval;
-	time_t val_p;
-	off_t off_p;
+	int	 rval;
+	time_t	 val_p;
+	off_t	 off_p;
 #ifdef	LOGCUT_DEBUG
-	char buf0[256], buf1[256];
+	char	 buf0[256], buf1[256];
 #endif
 
 	while (off_m < off_n) {
@@ -351,19 +340,19 @@ search_by_time(int fd, const char *fmt, time_t t, off_t off_m, off_t off_n)
 
 	}
 
-	return off_m;
+	return (off_m);
 }
 
 static int
 cut_file(int fd, int outfd, const char *fmt, time_t f, time_t t)
 {
-	int sz;
-	char buf[BUFSIZ];
-	struct stat st;
-	off_t off_b, off_e;
+	ssize_t		 sz;
+	char		 buf[BUFSIZ];
+	struct stat	 st;
+	off_t		 off_b, off_e;
 
 	if (fstat(fd, &st) != 0)
-		return 1;
+		return (1);
 
 	LOGCUT_DBG((stderr, "Searching %s", ctime(&f)));
 	off_b = search_by_time(fd, fmt, f, 0, st.st_size);
@@ -371,11 +360,11 @@ cut_file(int fd, int outfd, const char *fmt, time_t f, time_t t)
 	off_e = search_by_time(fd, fmt, t, off_b, st.st_size);
 	lseek(fd, off_b, SEEK_SET);
 
-	while (off_b < off_e &&
-	    (sz = read(fd, buf, MIN(sizeof(buf) - 1, off_e - off_b))) > 0) {
+	while (off_b < off_e && (sz =
+	    read(fd, buf, MIN(sizeof(buf) - 1, (u_int)(off_e - off_b)))) > 0) {
 		off_b += sz;
 		write(outfd, buf, sz);
 	}
 
-	return 0;
+	return (0);
 }

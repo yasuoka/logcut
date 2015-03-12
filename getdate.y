@@ -16,13 +16,9 @@
 /* SUPPRESS 287 on yaccpar_sccsid *//* Unusd static variable */
 /* SUPPRESS 288 on yyerrlab *//* Label unused */
 
-#include <sys/time.h>
-#ifndef lint
-/* __RCSID("$NetBSD: getdate.y,v 1.5 2000/11/19 11:15:01 mrg Exp $"); */
-#endif
-
 #include <sys/types.h>
-#include <sys/timeb.h>
+#include <sys/time.h>
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -335,7 +331,7 @@ static TABLE const MonthDayTable[] = {
     { "thurs",		tDAY, 4 },
     { "friday",		tDAY, 5 },
     { "saturday",	tDAY, 6 },
-    { NULL }
+    { NULL,		0, 0 }
 };
 
 /* Time units table. */
@@ -350,7 +346,7 @@ static TABLE const UnitsTable[] = {
     { "min",		tMINUTE_UNIT,	1 },
     { "second",		tSEC_UNIT,	1 },
     { "sec",		tSEC_UNIT,	1 },
-    { NULL }
+    { NULL,		0, 0 }
 };
 
 /* Assorted relative-time words. */
@@ -375,7 +371,7 @@ static TABLE const OtherTable[] = {
     { "eleventh",	tUNUMBER,	11 },
     { "twelfth",	tUNUMBER,	12 },
     { "ago",		tAGO,	1 },
-    { NULL }
+    { NULL,		0, 0 }
 };
 
 /* The timezone table. */
@@ -460,7 +456,7 @@ static TABLE const TimezoneTable[] = {
     { "nzst",	tZONE,     -HOUR(12) },	/* New Zealand Standard */
     { "nzdt",	tDAYZONE,  -HOUR(12) },	/* New Zealand Daylight */
     { "idle",	tZONE,     -HOUR(12) },	/* International Date Line East */
-    {  NULL  }
+    { NULL,	0, 0 }
 };
 
 /* Military timezone table. */
@@ -490,7 +486,7 @@ static TABLE const MilitaryTable[] = {
     { "x",	tZONE,	HOUR(-11) },
     { "y",	tZONE,	HOUR(-12) },
     { "z",	tZONE,	HOUR(  0) },
-    { NULL }
+    { NULL,	0, 0 }
 };
 
 

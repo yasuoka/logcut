@@ -3,8 +3,7 @@
 #
 # $Id: Makefile,v 1.3 2006/02/11 04:40:18 yasuoka Exp $
 PROG=		logcut
-CFLAGS+=	-g -Wall
-YPREFIX=	getdate_
+CFLAGS+=	-g -Wall -Wextra -Wno-unused-parameter
 SRCS=		logcut.c getdate.y
 NOMAN=		#
 
